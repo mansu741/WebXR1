@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body style="margin:0; overflow:hidden;">
+
+<button id="enter-ar" style="
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  background: #00A2FF;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 18px;
+">
+AR 시작
+</button>
+
+<script>
+let xrSession, renderer, scene, camera;
+let reticle;  // 바닥 hit-test용
+let model = null;
+
+async function init() {
+
+    renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera();
+
+    // 바닥 찾기용 reticle
+    reticle = new THREE.Mesh(
+        new THREE.RingGeometry(0.1, 0.12, 32).rotateX(-Math.PI/2),
+        new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+    );
+    reticle.visible = false;
+    scene.add(reticle);
+
+    // glb 로딩
+    const loader = new THREE.GLTFLoader();
+    loader.load('./model.glb', (gltf)=>{
+        model = gltf.scene;
+        model.visible = false;
+        model.scale.set(0.03, 0.03, 0.03);
+        scene.add(model);
+    });
+
+    document.getElementById("enter-ar").onclick = activateAR;
+}
+
+async function activateAR() {
+
+    xrSession = await navigator.xr.requestSession("immersive-ar", {
+        requiredFeatures: ["hit-test", "dom-overlay"],
+        domOverlay: { root: document.body }
+    });
+
+    renderer.xr.setSession(xrSession);
+
+    const refSpace = await xrSession.requestReferenceSpace("local");
+    const viewerSpace = await xrSession.requestReferenceSpace("viewer");
+    const hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+
+    xrSession.requestAnimationFrame(function loop(t, frame) {
+
+        const state = frame.getViewerPose(refSpace);
+
+        if (state) {
+            const results = frame.getHitTestResults(hitTestSource);
+
+            if (results.length > 0) {
+                const hit = results[0];
+                const pose = hit.getPose(refSpace);
+
+                reticle.visible = true;
+                reticle.position.copy(pose.transform.position);
+
+                if (!model.visible && model) {
+                    model.position.copy(pose.transform.position);
+                    model.visible = true;
+                }
+            }
+        }
+
+        renderer.render(scene, camera);
+        xrSession.requestAnimationFrame(loop);
+    });
+}
+
+init();
+</script>
+</body>
+</html>
