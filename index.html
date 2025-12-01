@@ -28,13 +28,7 @@ let reticle;  // 바닥 hit-test용
 let model = null;
 
 async function init() {
-    // 기본 조명 추가 (없으면 모델이 깜깜하게 보임)
-    const ambient = new THREE.AmbientLight(0xffffff, 1.5);
-    scene.add(ambient);
-
-    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
-    dir.position.set(1, 3, 2);
-    scene.add(dir);
+    
 
 
     renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
@@ -43,6 +37,14 @@ async function init() {
 
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera();
+
+    // 기본 조명 추가 (없으면 모델이 깜깜하게 보임)
+    const ambient = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambient);
+
+    const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+    dir.position.set(1, 3, 2);
+    scene.add(dir);
 
     // 바닥 찾기용 reticle
     reticle = new THREE.Mesh(
@@ -107,4 +109,5 @@ init();
 </script>
 </body>
 </html>
+
 
