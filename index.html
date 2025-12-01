@@ -90,13 +90,25 @@ async function activateAR() {
                 const hit = results[0];
                 const pose = hit.getPose(refSpace);
 
-                reticle.visible = true;
-                reticle.position.copy(pose.transform.position);
+                // reticle 바닥 위치 업데이트
+                    reticle.visible = true;
+                    reticle.position.copy(pose.transform.position);
 
-                if (!model.visible && model) {
-                    model.position.copy(pose.transform.position);
-                    model.visible = true;
-                }
+                // 모델 배치
+                    if (!model.visible) {
+                        model.visible = true;
+
+                        // 🔥 모델을 바닥에 정확하게 붙이기
+                        model.position.set(
+                        reticle.position.x,
+                        reticle.position.y,
+                        reticle.position.z
+        );
+
+        // 또는 더 정확하게 하면 → model.position.copy(reticle.position);
+    }
+}
+
             }
         }
 
@@ -109,5 +121,6 @@ init();
 </script>
 </body>
 </html>
+
 
 
